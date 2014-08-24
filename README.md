@@ -12,8 +12,8 @@ Hopelessly insecure, but very minimal and fully configurable with text files.
 In fact, there is only `golive.json`. :-)
 
 See `golive.example.json` for an example configuration. If you ran `golive` and
-received a POST webhook request for this project, a `test.txt` file would be
-created in the same directory with the contents `foo`.
+received a POST webhook request for my test repo for this project, a `test.txt`
+file would be created in the same directory with the contents `foo`.
 
 ## RFC
 
