@@ -1,6 +1,6 @@
 # Golive
 
-A minimal continious <someting> system.
+A minimal continious *someting* system.
 
 It listens on port 8080 for a POST webhook request from hosted git services
 (only Bitbucket at the moment).
