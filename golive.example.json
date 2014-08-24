@@ -1,0 +1,7 @@
+{
+  "bitbucket.org/jumoel/test/": {
+    "master": [
+      "echo 'foo' > test.txt"
+    ]
+  }
+}
