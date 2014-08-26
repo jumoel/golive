@@ -12,26 +12,39 @@ all the commands listed run, as-is.
 Hopelessly insecure, but very minimal and fully configurable with text files.
 In fact, there is only `golive.json`. :-)
 
-See `golive.example.json` for an example configuration. If you ran `golive` and
-received a POST webhook request for my test repo for this project, a `test.txt`
-file would be created in the same directory with the contents `foo`.
+See `golive.example.json` for an example configuration.
 
 ## Usage
 
     $ golive -help
-    Usage of golive:
-      -port=8080: port number to listen on
+    Usage of ./golive:
+      -config="golive.json": the configfile to read
+      -port=8080: portnumber to listen on
+      -v=false: print more output
+
+## Example of use
+
+With the supplied `golive.example.json`:
+
+ 1. Fill in Bitbucket repository URL and branch in `golive.example.json`
+ 2. Run `golive --config=golive.example.json -v` at `servername.tld`.
+ 3. Set up POST hook in a Bitbucket repository to point to `servername.tld`
+ 4. Commit a change to the repository and push it to Bitbucket
+ 5. Watch, as `test.txt` in the folder you ran `golive` from contains
+    `Commit from: <yourrepository>/<yourbranch>`
+
+### Real world example
+
+I've used `golive` to run [Ansible](http://www.ansible.com) playbooks that
+deploy websites to servers when their repositories have been updated.
+
+`golive` could easily run a test suite or other shenanigans as well.
+
+## Dependencies
+
+`bash`, so `bash -c $job` can run.
 
 ## RFC
 
 This is my first Golang project - I'd very much like to know how it can be
 improved to be more idiomatic, so I welcome all and any critique/comments.
-
-## Example of use
-
-We run [Ansible](http://www.ansible.com) playbooks that deploy the pushed
-repository/branch to our servers.
-
-## Dependencies
-
-`bash`, so `bash -c $job` can run.
