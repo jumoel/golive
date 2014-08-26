@@ -1,7 +1,7 @@
 {
-  "bitbucket.org/jumoel/test/": {
+  "https://bitbucket.org/jumoel/test/": {
     "master": [
-      "echo 'foo' > test.txt"
+      "echo 'Commit from: {{.Repository}}{{.Branch}}' > test.txt"
     ]
   }
 }

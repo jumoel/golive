@@ -8,12 +8,14 @@ import (
   "os/exec"
   "flag"
   "strconv"
+  "crypto/md5"
+  "text/template"
+  "bytes"
 )
 
 // A map of repos => (a map of branches => (a list of actions))
 // Todo: Idiomatic way of doing this?
 type Config map[string]map[string][]string
-
 
 type HookMsg struct {
   CanonicalUrl string `json:"canon_url"`
@@ -40,6 +42,8 @@ type Job struct {
 var listenPort = flag.Int("port", 8080, "portnumber to listen on")
 var configFile = flag.String("config", "golive.json", "the configfile to read")
 var verbose = flag.Bool("v", false, "print more output")
+
+var jobTemplates = make(map[[16]byte]template.Template)
 
 func main() {
 	flag.Parse()
@@ -99,7 +103,7 @@ func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
     if branches, ok := config[commit.Repository]; ok {
       if actions, ok := branches[commit.Branch]; ok {
         for _, action := range actions {
-          results <- Job{commit, action}
+          results <- Job{commit, string(action)}
         }
       }
     }
@@ -112,7 +116,24 @@ func jobRunner(jobs <-chan Job) {
       log.Print("Running job: ", job)
     }
 
-    command := exec.Command("bash", "-c", job.Action)
+    hash := md5.Sum([]byte(job.Action))
+
+    if _, ok := jobTemplates[hash]; !ok {
+      t, err := template.New(string(hash[:])).Parse(job.Action)
+      if err != nil {
+        log.Fatal("Could not compile template: ", job.Action, " - ", err)
+      }
+
+      jobTemplates[hash] = *t
+    }
+
+    t := jobTemplates[hash]
+
+    var buff bytes.Buffer
+    (&t).Execute(&buff, job.Commit)
+    s := buff.String()
+
+    command := exec.Command("bash", "-c", s)
     go command.Run()
   }
 }
