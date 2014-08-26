@@ -8,6 +8,7 @@ import (
   "regexp"
   "os/exec"
   "flag"
+  "strconv"
 )
 
 // A map of repos => (a map of branches => (a list of actions))
@@ -32,7 +33,7 @@ type Commit struct {
   Branch string
 }
 
-var listenPort = flag.String("port", "8080", "portnumber to listen on")
+var listenPort = flag.Int("port", 8080, "portnumber to listen on")
 
 func main() {
 	flag.Parse()
@@ -62,7 +63,7 @@ func main() {
     msgs <- hookmsg
   })
 
-  log.Fatal(http.ListenAndServe(":" + *listenPort, nil))
+  log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*listenPort), nil))
 }
 
 func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
