@@ -6,7 +6,6 @@ import (
   "io/ioutil"
   "encoding/json"
   "regexp"
-  "fmt"
   "os/exec"
 )
 
