@@ -7,6 +7,7 @@ import (
   "encoding/json"
   "regexp"
   "os/exec"
+  "flag"
 )
 
 // A map of repos => (a map of branches => (a list of actions))
@@ -31,7 +32,11 @@ type Commit struct {
   Branch string
 }
 
+var listenPort = flag.String("port", "8080", "portnumber to listen on")
+
 func main() {
+	flag.Parse()
+
   config_raw, _ := ioutil.ReadFile("golive.json")
   var config Config;
   json.Unmarshal(config_raw, &config)
@@ -57,7 +62,7 @@ func main() {
     msgs <- hookmsg
   })
 
-  log.Fatal(http.ListenAndServe(":8080", nil))
+  log.Fatal(http.ListenAndServe(":" + *listenPort, nil))
 }
 
 func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
