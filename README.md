@@ -1,6 +1,6 @@
 # Golive
 
-A minimal continious *someting* system. The code is very much in flux, so don't
+A minimal continuous *someting* system. The code is very much in flux, so don't
 expect things to work the same *N* commits from now!
 
 It (by default) listens on port 8080 for a POST webhook request from hosted git
@@ -20,7 +20,7 @@ file would be created in the same directory with the contents `foo`.
 
     $ golive -help
     Usage of golive:
-      -port=8080: portnumber to listen on
+      -port=8080: port number to listen on
 
 ## RFC
 
