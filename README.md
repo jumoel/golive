@@ -2,8 +2,8 @@
 
 A minimal continious *someting* system.
 
-It listens on port 8080 for a POST webhook request from hosted git services
-(only Bitbucket at the moment).
+It (by default) listens on port 8080 for a POST webhook request from hosted git
+services (only Bitbucket at the moment).
 
 If the pushed repository and branch is present in the config file `golive.json`,
 all the commands listed run, as-is.
@@ -14,6 +14,12 @@ In fact, there is only `golive.json`. :-)
 See `golive.example.json` for an example configuration. If you ran `golive` and
 received a POST webhook request for my test repo for this project, a `test.txt`
 file would be created in the same directory with the contents `foo`.
+
+## Usage
+
+    $ golive -help
+    Usage of golive:
+      -port=8080: portnumber to listen on
 
 ## RFC
 
