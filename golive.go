@@ -5,7 +5,6 @@ import (
   "log"
   "io/ioutil"
   "encoding/json"
-  "regexp"
   "os/exec"
   "flag"
   "strconv"
@@ -33,18 +32,29 @@ type Commit struct {
   Branch string
 }
 
+type Job struct {
+  Commit Commit
+  Action string
+}
+
 var listenPort = flag.Int("port", 8080, "portnumber to listen on")
+var configFile = flag.String("config", "golive.json", "the configfile to read")
+var verbose = flag.Bool("v", false, "print more output")
 
 func main() {
 	flag.Parse()
 
-  config_raw, _ := ioutil.ReadFile("golive.json")
+  config_raw, err := ioutil.ReadFile(*configFile)
+  if err != nil {
+    log.Fatal(err)
+  }
+
   var config Config;
   json.Unmarshal(config_raw, &config)
 
   msgs := make(chan HookMsg, 100)
   commits := make(chan Commit, 100)
-  jobs := make(chan string, 100)
+  jobs := make(chan Job, 100)
 
   go hookWrangler(msgs, commits)
   go commitWrangler(commits, jobs, config)
@@ -60,6 +70,10 @@ func main() {
       return
     }
 
+    if *verbose {
+      log.Print("Received commit: ", hookmsg)
+    }
+
     msgs <- hookmsg
   })
 
@@ -67,11 +81,8 @@ func main() {
 }
 
 func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
-  reg := regexp.MustCompile("https?://")
-
   for msg := range msgs {
-    baserepo := reg.ReplaceAllString(msg.CanonicalUrl, "")
-    repository := baserepo + msg.Repository.AbsoluteUrl
+    repository := msg.CanonicalUrl + msg.Repository.AbsoluteUrl
 
     for _, commit := range msg.Commits {
       results <- Commit{ repository, commit.Branch}
@@ -79,7 +90,7 @@ func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
   }
 }
 
-func commitWrangler(commits <-chan Commit, results chan<- string, config Config) {
+func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
   for commit := range commits {
     if commit.Branch == "" || commit.Repository == "" {
       continue
@@ -88,16 +99,20 @@ func commitWrangler(commits <-chan Commit, results chan<- string, config Config)
     if branches, ok := config[commit.Repository]; ok {
       if actions, ok := branches[commit.Branch]; ok {
         for _, action := range actions {
-          results <- action
+          results <- Job{commit, action}
         }
       }
     }
   }
 }
 
-func jobRunner(jobs <-chan string) {
+func jobRunner(jobs <-chan Job) {
   for job := range jobs {
-    command := exec.Command("bash", "-c", job)
+    if *verbose {
+      log.Print("Running job: ", job)
+    }
+
+    command := exec.Command("bash", "-c", job.Action)
     go command.Run()
   }
 }
