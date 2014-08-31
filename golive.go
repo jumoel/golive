@@ -44,17 +44,12 @@ var configFile = flag.String("config", "golive.json", "the configfile to read")
 var verbose = flag.Bool("v", false, "print more output")
 
 var jobTemplates = make(map[[16]byte]template.Template)
+var config Config
 
 func main() {
 	flag.Parse()
 
-  config_raw, err := ioutil.ReadFile(*configFile)
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  var config Config;
-  json.Unmarshal(config_raw, &config)
+  parseConfig(*configFile)
 
   msgs := make(chan HookMsg, 100)
   commits := make(chan Commit, 100)
@@ -82,6 +77,15 @@ func main() {
   })
 
   log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*listenPort), nil))
+}
+
+func parseConfig(string configFile) {
+    config_raw, err := ioutil.ReadFile(configFile)
+    if err != nil {
+      log.Fatal(err)
+    }
+
+    json.Unmarshal(config_raw, &config)
 }
 
 func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
