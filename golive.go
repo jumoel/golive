@@ -103,15 +103,18 @@ func watchConfig(configFile string) {
           }
 
           if *verbose {
-            log.Println(event.String())
+            log.Println(event.Name, event.Op, event)
           }
 
-          if event.Op & fsnotify.Write == fsnotify.Write ||
-             event.Op & fsnotify.Chmod == fsnotify.Chmod {
-            log.Print("Relading config file ", configFile)
-
-            parseConfig(configFile)
+          // The watching doesn't seem to follow renames, which happen i.e.
+          // during Vim editing, so set up a new one
+          if event.Op & fsnotify.Rename == fsnotify.Rename {
+            addWatcher(watcher, configFile)
           }
+
+          log.Print("Relading config file ", configFile)
+
+          parseConfig(configFile)
 
         case err := <-watcher.Errors:
           if err == nil {
@@ -124,12 +127,16 @@ func watchConfig(configFile string) {
     }
   }()
 
-  err = watcher.Add(configFile)
+  addWatcher(watcher, configFile)
+
+  <- done
+}
+
+func addWatcher(watcher *fsnotify.Watcher, file string) {
+  err := watcher.Add(file)
   if err != nil {
     log.Fatal(err)
   }
-
-  <- done
 }
 
 func parseConfig(configFile string) {
