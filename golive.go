@@ -54,10 +54,12 @@ func main() {
   msgs := make(chan HookMsg, 100)
   commits := make(chan Commit, 100)
   jobs := make(chan Job, 100)
+  actions := make(chan string, 100)
 
   go hookWrangler(msgs, commits)
   go commitWrangler(commits, jobs, config)
-  go jobRunner(jobs)
+  go jobWrangler(jobs, actions)
+  go actionRunner(actions)
 
   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     payload := r.FormValue("payload")
@@ -114,7 +116,7 @@ func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
   }
 }
 
-func jobRunner(jobs <-chan Job) {
+func jobWrangler(jobs <-chan Job, actions chan<- string) {
   for job := range jobs {
     if *verbose {
       log.Print("Running job: ", job)
@@ -137,7 +139,14 @@ func jobRunner(jobs <-chan Job) {
     (&t).Execute(&buff, job.Commit)
     s := buff.String()
 
-    command := exec.Command("bash", "-c", s)
-    go command.Run()
+    actions <- s
+  }
+}
+
+func actionRunner(actions <-chan string) {
+  for action := range actions {
+    command := exec.Command("bash", "-c", action)
+
+    command.Run()
   }
 }
