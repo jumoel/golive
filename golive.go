@@ -107,8 +107,7 @@ func watchConfig(configFile string) {
           }
 
           if event.Op & fsnotify.Write == fsnotify.Write ||
-             event.Op & fsnotify.Chmod == fsnotify.Chmod
-             {
+             event.Op & fsnotify.Chmod == fsnotify.Chmod {
             log.Print("Relading config file ", configFile)
 
             parseConfig(configFile)
