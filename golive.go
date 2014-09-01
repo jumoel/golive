@@ -187,10 +187,6 @@ func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
 
 func jobWrangler(jobs <-chan Job, actions chan<- string) {
   for job := range jobs {
-    if *verbose {
-      log.Print("Running job: ", job)
-    }
-
     hash := md5.Sum([]byte(job.Action))
 
     if _, ok := jobTemplates[hash]; !ok {
@@ -214,6 +210,10 @@ func jobWrangler(jobs <-chan Job, actions chan<- string) {
 
 func actionRunner(actions <-chan string) {
   for action := range actions {
+    if *verbose {
+      log.Print("Running action: ", action)
+    }
+
     command := exec.Command("bash", "-c", action)
 
     command.Run()
