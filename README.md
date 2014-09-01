@@ -14,6 +14,8 @@ In fact, there is only `golive.json`. :-)
 
 See `golive.example.json` for an example configuration.
 
+`golive` automatically re-reads the configuration file if it is changed.
+
 ## Usage
 
     $ golive -help
