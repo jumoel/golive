@@ -11,6 +11,7 @@ import (
   "crypto/md5"
   "text/template"
   "bytes"
+  "gopkg.in/fsnotify.v1"
 )
 
 // A map of repos => (a map of branches => (a list of actions))
@@ -50,6 +51,7 @@ func main() {
 	flag.Parse()
 
   parseConfig(*configFile)
+  watchConfig(*configFile)
 
   msgs := make(chan HookMsg, 100)
   commits := make(chan Commit, 100)
@@ -67,8 +69,7 @@ func main() {
     var hookmsg HookMsg
     if err := json.Unmarshal([]byte(payload), &hookmsg); err != nil {
       http.Error(w, "Could not decode json", 500)
-      log.Print(err)
-      return
+      log.Fatal(err)
     }
 
     if *verbose {
@@ -81,13 +82,69 @@ func main() {
   log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*listenPort), nil))
 }
 
-func parseConfig(string configFile) {
+func watchConfig(configFile string) {
+  watcher, err := fsnotify.NewWatcher()
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  log.Print("Watching config file: ", configFile)
+
+  defer watcher.Close()
+
+	done := make(chan bool)
+
+  go func() {
+    for {
+      select {
+        case event := <-watcher.Events:
+          if event.Name == "" {
+            continue
+          }
+
+          if *verbose {
+            log.Println(event.String())
+          }
+
+          if event.Op & fsnotify.Write == fsnotify.Write {
+            log.Print("Relading config file ", configFile)
+
+            parseConfig(configFile)
+          }
+
+        case err := <-watcher.Errors:
+          if err == nil {
+            continue
+          }
+
+          done <- true
+          log.Fatal("Error when watching config file: ", err)
+      }
+    }
+  }()
+
+  err = watcher.Add(configFile)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  <- done
+}
+
+func parseConfig(configFile string) {
     config_raw, err := ioutil.ReadFile(configFile)
     if err != nil {
       log.Fatal(err)
     }
 
-    json.Unmarshal(config_raw, &config)
+    var newConfig Config
+    json.Unmarshal(config_raw, &newConfig)
+
+    config = newConfig
+
+    if *verbose {
+      log.Print("Loaded config: ", config)
+    }
 }
 
 func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
