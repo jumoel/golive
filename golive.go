@@ -51,7 +51,7 @@ func main() {
 	flag.Parse()
 
   parseConfig(*configFile)
-  watchConfig(*configFile)
+  go watchConfig(*configFile)
 
   msgs := make(chan HookMsg, 100)
   commits := make(chan Commit, 100)
@@ -63,7 +63,11 @@ func main() {
   go jobWrangler(jobs, actions)
   go actionRunner(actions)
 
+  log.Print("Starting golive server")
+
   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    log.Print("Received request")
+
     payload := r.FormValue("payload")
 
     var hookmsg HookMsg
