@@ -171,12 +171,23 @@ func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
 
 func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
   for commit := range commits {
+    if *verbose {
+      log.Print("Received commit struct: ", commit)
+    }
+    
     if commit.Branch == "" || commit.Repository == "" {
       continue
     }
 
     if branches, ok := config[commit.Repository]; ok {
+      if *verbose {
+        log.Print("Repository present in config: ", commit.Repository)
+      }
       if actions, ok := branches[commit.Branch]; ok {
+        if *verbose {
+          log.Print("Branch present in config: ", commit.Branch)
+        }
+        
         for _, action := range actions {
           results <- Job{commit, string(action)}
         }
