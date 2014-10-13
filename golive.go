@@ -63,7 +63,7 @@ func main() {
   go jobWrangler(jobs, actions)
   go actionRunner(actions)
 
-  log.Print("Starting golive server")
+  log.Print("Starting golive server on port ", *listenPort)
 
   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     log.Print("Received request")
@@ -174,7 +174,7 @@ func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
     if *verbose {
       log.Print("Received commit struct: ", commit)
     }
-    
+
     if commit.Branch == "" || commit.Repository == "" {
       continue
     }
@@ -183,14 +183,25 @@ func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
       if *verbose {
         log.Print("Repository present in config: ", commit.Repository)
       }
+
+      runactions := make([]string, 0)
+
       if actions, ok := branches[commit.Branch]; ok {
         if *verbose {
           log.Print("Branch present in config: ", commit.Branch)
         }
-        
-        for _, action := range actions {
-          results <- Job{commit, string(action)}
+
+        runactions = actions
+      } else if actions, ok := branches["*"]; ok {
+        if *verbose {
+          log.Print("Wildcard branch present in config: ", commit.Branch)
         }
+
+        runactions = actions
+      }
+
+      for _, action := range runactions {
+        results <- Job{commit, string(action)}
       }
     }
   }
