@@ -7,7 +7,9 @@ It (by default) listens on port 8080 for a POST webhook request from hosted git
 services (only Bitbucket at the moment).
 
 If the pushed repository and branch is present in the config file `golive.json`,
-all the commands listed run, as-is.
+all the commands listed run, as-is. Wildcards are also available as fallback matches
+for the branch names. They will be run if no other branch matches. They are denoted with `*`
+as the branch name.
 
 Hopelessly insecure, but very minimal and fully configurable with text files.
 In fact, there is only `golive.json`. :-)
@@ -26,14 +28,29 @@ See `golive.example.json` for an example configuration.
 
 ## Example of use
 
-With the supplied `golive.example.json`:
+With `golive.json` containing:
+
+    {
+      "https://bitbucket.org/username/repo/": {
+        "master": [
+          "echo 'Commit from: {{.Repository}}{{.Branch}}' >> test.txt"
+        ],
+        "*": [
+          "echo 'Commit from: {{.Repository}}{{.Branch}} WILDCARD' >> test.txt"
+        ]
+      }
+    }
+
 
  1. Fill in Bitbucket repository URL and branch in `golive.example.json`
- 2. Run `golive --config=golive.example.json -v` at `servername.tld`.
- 3. Set up POST hook in a Bitbucket repository to point to `servername.tld`
- 4. Commit a change to the repository and push it to Bitbucket
- 5. Watch, as `test.txt` in the folder you ran `golive` from contains
-    `Commit from: <yourrepository>/<yourbranch>`
+ 2. Run `golive --config=golive.json --port=8080 -v` at `servername.tld`.
+ 3. Set up POST hook in a Bitbucket repository to point to `servername.tld:8080`
+ 4. Commit a change to the `master` branch repository and push it to Bitbucket
+ 5. Commit a change to the `test` branch repository and push it to Bitbucket
+ 6. Watch, as `test.txt` in the folder you ran `golive` from contains
+    `Commit from: <repository>/master` as well as `Commit from: <repository>/test WILDCARD`
+    
+
 
 ### Real world example
 
