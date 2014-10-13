@@ -43,6 +43,7 @@ type Job struct {
 var listenPort = flag.Int("port", 8080, "portnumber to listen on")
 var configFile = flag.String("config", "golive.json", "the configfile to read")
 var verbose = flag.Bool("v", false, "print more output")
+var bootstrap = flag.Bool("bootstrap", false, "run all non-wildcard jobs on startup")
 
 var jobTemplates = make(map[[16]byte]template.Template)
 var config Config
@@ -57,6 +58,10 @@ func main() {
   commits := make(chan Commit, 100)
   jobs := make(chan Job, 100)
   actions := make(chan string, 100)
+
+  if *bootstrap {
+    performBootstrap(config, jobs)
+  }
 
   go hookWrangler(msgs, commits)
   go commitWrangler(commits, jobs, config)
@@ -84,6 +89,34 @@ func main() {
   })
 
   log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*listenPort), nil))
+}
+
+func performBootstrap(config Config, results chan<- Job) {
+  if *verbose {
+    log.Println("Starting bootstrap")
+  }
+
+  for repository, branches := range config {
+    for branch, actions := range branches {
+      if (branch == "*") {
+        continue
+      }
+
+      for _, action := range actions {
+        fakecommit := Commit{ repository, branch }
+
+        if *verbose {
+          log.Println("Creating bootstrap job: ", fakecommit, action)
+        }
+
+        results <- Job{fakecommit, string(action)}
+      }
+    }
+  }
+
+  if *verbose {
+    log.Println("Bootstrap done")
+  }
 }
 
 func watchConfig(configFile string) {
@@ -212,21 +245,23 @@ func jobWrangler(jobs <-chan Job, actions chan<- string) {
     hash := md5.Sum([]byte(job.Action))
 
     if _, ok := jobTemplates[hash]; !ok {
-      t, err := template.New(string(hash[:])).Parse(job.Action)
+      log.Print("Template not found, compiling: ", job.Action)
+
+      tpl, err := template.New(string(hash[:])).Parse(job.Action)
       if err != nil {
         log.Fatal("Could not compile template: ", job.Action, " - ", err)
       }
 
-      jobTemplates[hash] = *t
+      jobTemplates[hash] = *tpl
     }
 
-    t := jobTemplates[hash]
+    tpl := jobTemplates[hash]
 
     var buff bytes.Buffer
-    (&t).Execute(&buff, job.Commit)
-    s := buff.String()
+    (&tpl).Execute(&buff, job.Commit)
+    str := buff.String()
 
-    actions <- s
+    actions <- str
   }
 }
 
