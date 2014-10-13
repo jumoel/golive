@@ -11,6 +11,9 @@ all the commands listed run, as-is. Wildcards are also available as fallback mat
 for the branch names. They will be run if no other branch matches. They are denoted with `*`
 as the branch name.
 
+If `golive` is run with `-bootstrap`, it will run all non-wildcard actions a single time on startup.
+This can be used to ensure that all `golive`-managed sites are present when provisioning new servers.
+
 Hopelessly insecure, but very minimal and fully configurable with text files.
 In fact, there is only `golive.json`. :-)
 
@@ -25,6 +28,7 @@ See `golive.example.json` for an example configuration.
       -config="golive.json": the configfile to read
       -port=8080: portnumber to listen on
       -v=false: print more output
+      -bootstrap=false: Run all non-wildcard actions on startup
 
 ## Example of use
 
