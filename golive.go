@@ -78,7 +78,7 @@ func main() {
     var hookmsg HookMsg
     if err := json.Unmarshal([]byte(payload), &hookmsg); err != nil {
       http.Error(w, "Could not decode json", 500)
-      log.Fatal(err)
+      log.Fatal(err, " Payload: ", payload)
     }
 
     if *verbose {
