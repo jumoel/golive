@@ -64,7 +64,7 @@ func main() {
   }
 
   go hookWrangler(msgs, commits)
-  go commitWrangler(commits, jobs, config)
+  go commitWrangler(commits, jobs)
   go jobWrangler(jobs, actions)
   go actionRunner(actions)
 
@@ -202,7 +202,7 @@ func hookWrangler(msgs <-chan HookMsg, results chan<- Commit) {
   }
 }
 
-func commitWrangler(commits <-chan Commit, results chan<- Job, config Config) {
+func commitWrangler(commits <-chan Commit, results chan<- Job) {
   for commit := range commits {
     if *verbose {
       log.Print("Received commit struct: ", commit)
