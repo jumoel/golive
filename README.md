@@ -1,5 +1,7 @@
 # Golive
 
+![Not maintained](https://img.shields.io/badge/Maintained%3F-no-red.svg)
+
 A minimal continuous *someting* system. The code is very much in flux, so don't
 expect things to work the same *N* commits from now!
 
